@@ -21,7 +21,8 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, 60*time.Second, config.Server.IdleTimeout)
 
 	assert.Equal(t, "your-secret-key-change-in-production", config.Auth.JWT.Secret)
-	assert.Equal(t, 24*time.Hour, config.Auth.JWT.Expiry)
+	assert.Equal(t, 15*time.Minute, config.Auth.JWT.AccessExpiry)
+	assert.Equal(t, 7*24*time.Hour, config.Auth.JWT.RefreshExpiry)
 	assert.False(t, config.Auth.APIKey.Enabled)
 	assert.Equal(t, "X-API-Key", config.Auth.APIKey.Header)
 
@@ -224,7 +225,7 @@ func TestConfigValidation(t *testing.T) {
 			name: "invalid JWT expiry",
 			config: func() *Config {
 				c := DefaultConfig()
-				c.Auth.JWT.Expiry = -1 * time.Hour
+				c.Auth.JWT.AccessExpiry = -1 * time.Hour
 				return c
 			}(),
 			wantErr: true,
@@ -671,7 +672,7 @@ logging:
 	assert.Equal(t, 9090, config.Server.Port)
 	assert.Equal(t, "127.0.0.1", config.Server.Host)
 	assert.Equal(t, "test-secret", config.Auth.JWT.Secret)
-	assert.Equal(t, 1*time.Hour, config.Auth.JWT.Expiry)
+	assert.Equal(t, 15*time.Minute, config.Auth.JWT.AccessExpiry)
 	assert.Equal(t, 500, config.RateLimit.DefaultRate)
 	assert.Equal(t, "debug", config.Logging.Level)
 }
@@ -740,8 +741,9 @@ func TestBackendAndRouteConsistency(t *testing.T) {
 		},
 		Auth: AuthConfig{
 			JWT: JWTConfig{
-				Secret: "test-secret",
-				Expiry: 24 * time.Hour,
+				Secret:        "test-secret",
+				AccessExpiry:  15 * time.Minute,
+				RefreshExpiry: 7 * 24 * time.Hour,
 			},
 			APIKey: APIKeyConfig{
 				Enabled: false,
@@ -854,8 +856,9 @@ func TestConfigWithAllFeatures(t *testing.T) {
 		},
 		Auth: AuthConfig{
 			JWT: JWTConfig{
-				Secret: "comprehensive-test-secret",
-				Expiry: 24 * time.Hour,
+				Secret:        "comprehensive-test-secret",
+				AccessExpiry:  15 * time.Minute,
+				RefreshExpiry: 7 * 24 * time.Hour,
 			},
 			APIKey: APIKeyConfig{
 				Enabled: true,

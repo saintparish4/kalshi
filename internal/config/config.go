@@ -43,8 +43,9 @@ type AuthConfig struct {
 
 // JWTConfig defines JWT-specific configuration
 type JWTConfig struct {
-	Secret string        `mapstructure:"secret" json:"secret"`
-	Expiry time.Duration `mapstructure:"expiry" json:"expiry"`
+	Secret        string        `mapstructure:"secret" json:"secret"`
+	AccessExpiry  time.Duration `mapstructure:"access_expiry" json:"access_expiry"`
+	RefreshExpiry time.Duration `mapstructure:"refresh_expiry" json:"refresh_expiry"`
 }
 
 // APIKeyConfig defines API key authentication configuration
@@ -131,8 +132,9 @@ func DefaultConfig() *Config {
 		},
 		Auth: AuthConfig{
 			JWT: JWTConfig{
-				Secret: "your-secret-key-change-in-production",
-				Expiry: 24 * time.Hour,
+				Secret:        "your-secret-key-change-in-production",
+				AccessExpiry:  15 * time.Minute,
+				RefreshExpiry: 7 * 24 * time.Hour, // 7 days
 			},
 			APIKey: APIKeyConfig{
 				Enabled: false,
@@ -311,8 +313,20 @@ func (j *JWTConfig) Validate() error {
 		return fmt.Errorf("JWT secret cannot be empty - set KALSHI_AUTH_JWT_SECRET environment variable")
 	}
 
-	if j.Expiry <= 0 {
-		return fmt.Errorf("JWT expiry must be positive, got %v", j.Expiry)
+	if len(j.Secret) < 32 {
+		return fmt.Errorf("JWT secret must be at least 32 characters long for security")
+	}
+
+	if j.AccessExpiry <= 0 {
+		return fmt.Errorf("JWT access expiry must be positive, got %v", j.AccessExpiry)
+	}
+
+	if j.RefreshExpiry <= 0 {
+		return fmt.Errorf("JWT refresh expiry must be positive, got %v", j.RefreshExpiry)
+	}
+
+	if j.AccessExpiry >= j.RefreshExpiry {
+		return fmt.Errorf("JWT access expiry must be less than refresh expiry")
 	}
 
 	return nil
