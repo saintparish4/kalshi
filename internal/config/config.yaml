@@ -7,8 +7,9 @@ server:
 
 auth:
   jwt:
-    secret: "your-secret-key-change-this-in-production"
-    expiry: "24h"
+    secret: "your-secret-key-change-this-in-production-must-be-32-chars"
+    access_expiry: "24h"
+    refresh_expiry: "168h"
   api_key:
     enabled: true
     header: "X-API-Key"

@@ -69,6 +69,39 @@ func (bm *BackendManager) GetBackend(name string) (*Backend, error) {
 	return backend, nil
 }
 
+// GetBackends returns all backends
+func (bm *BackendManager) GetBackends() []*Backend {
+	bm.mu.RLock()
+	defer bm.mu.RUnlock()
+
+	backends := make([]*Backend, 0, len(bm.backends))
+	for _, backend := range bm.backends {
+		backends = append(backends, backend)
+	}
+	return backends
+}
+
+// GetHealthyBackends returns only healthy backends
+func (bm *BackendManager) GetHealthyBackends() []*Backend {
+	bm.mu.RLock()
+	defer bm.mu.RUnlock()
+
+	healthyBackends := make([]*Backend, 0)
+	for _, backend := range bm.backends {
+		backend.mu.RLock()
+		if backend.IsHealthy {
+			healthyBackends = append(healthyBackends, backend)
+		}
+		backend.mu.RUnlock()
+	}
+	return healthyBackends
+}
+
+// GetAllBackends returns all backends (healthy and unhealthy)
+func (bm *BackendManager) GetAllBackends() []*Backend {
+	return bm.GetBackends()
+}
+
 func (bm *BackendManager) StartHealthChecks(interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	go func() {

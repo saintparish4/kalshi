@@ -97,7 +97,7 @@ func TestLoadConfigFromEnv(t *testing.T) {
 	// Set environment variables
 	os.Setenv("KALSHI_SERVER_PORT", "9090")
 	os.Setenv("KALSHI_SERVER_HOST", "127.0.0.1")
-	os.Setenv("KALSHI_AUTH_JWT_SECRET", "test-secret")
+	os.Setenv("KALSHI_AUTH_JWT_SECRET", "test-secret-must-be-at-least-32-characters-long")
 	os.Setenv("KALSHI_RATE_LIMIT_DEFAULT_RATE", "500")
 	os.Setenv("KALSHI_LOGGING_LEVEL", "debug")
 
@@ -115,7 +115,7 @@ func TestLoadConfigFromEnv(t *testing.T) {
 
 	assert.Equal(t, 9090, config.Server.Port)
 	assert.Equal(t, "127.0.0.1", config.Server.Host)
-	assert.Equal(t, "test-secret", config.Auth.JWT.Secret)
+	assert.Equal(t, "test-secret-must-be-at-least-32-characters-long", config.Auth.JWT.Secret)
 	assert.Equal(t, 500, config.RateLimit.DefaultRate)
 	assert.Equal(t, "debug", config.Logging.Level)
 }
@@ -136,7 +136,7 @@ func TestLoadConfigFromEnvWithDefaults(t *testing.T) {
 	// Should use defaults for unset values, except for values set in config.yaml
 	assert.Equal(t, 8080, config.Server.Port)
 	assert.Equal(t, "0.0.0.0", config.Server.Host)
-	assert.Equal(t, "your-secret-key-change-this-in-production", config.Auth.JWT.Secret)
+	assert.Equal(t, "your-secret-key-change-this-in-production-must-be-32-chars", config.Auth.JWT.Secret)
 	assert.Equal(t, 1000, config.RateLimit.DefaultRate) // config.yaml sets this to 1000
 	assert.Equal(t, "info", config.Logging.Level)
 }
@@ -654,8 +654,9 @@ server:
   host: "127.0.0.1"
 auth:
   jwt:
-    secret: "test-secret"
-    expiry: "1h"
+    secret: "test-secret-must-be-at-least-32-characters-long"
+    access_expiry: "1h"
+    refresh_expiry: "168h"
 rate_limit:
   default_rate: 500
 logging:
@@ -671,7 +672,7 @@ logging:
 
 	assert.Equal(t, 9090, config.Server.Port)
 	assert.Equal(t, "127.0.0.1", config.Server.Host)
-	assert.Equal(t, "test-secret", config.Auth.JWT.Secret)
+	assert.Equal(t, "test-secret-must-be-at-least-32-characters-long", config.Auth.JWT.Secret)
 	assert.Equal(t, 15*time.Minute, config.Auth.JWT.AccessExpiry)
 	assert.Equal(t, 500, config.RateLimit.DefaultRate)
 	assert.Equal(t, "debug", config.Logging.Level)
@@ -741,7 +742,7 @@ func TestBackendAndRouteConsistency(t *testing.T) {
 		},
 		Auth: AuthConfig{
 			JWT: JWTConfig{
-				Secret:        "test-secret",
+				Secret:        "test-secret-must-be-at-least-32-characters-long",
 				AccessExpiry:  15 * time.Minute,
 				RefreshExpiry: 7 * 24 * time.Hour,
 			},
@@ -824,11 +825,11 @@ func TestConfigSerialization(t *testing.T) {
 func TestConfigDeepCopy(t *testing.T) {
 	original := DefaultConfig()
 	original.Server.Port = 9999
-	original.Auth.JWT.Secret = "original-secret"
+	original.Auth.JWT.Secret = "original-secret-must-be-at-least-32-characters-long"
 
 	// Create a copy by loading from environment
 	os.Setenv("KALSHI_SERVER_PORT", "8888")
-	os.Setenv("KALSHI_AUTH_JWT_SECRET", "new-secret")
+	os.Setenv("KALSHI_AUTH_JWT_SECRET", "new-secret-must-be-at-least-32-characters-long")
 	defer func() {
 		os.Unsetenv("KALSHI_SERVER_PORT")
 		os.Unsetenv("KALSHI_AUTH_JWT_SECRET")
@@ -840,8 +841,8 @@ func TestConfigDeepCopy(t *testing.T) {
 	// Verify they are different
 	assert.Equal(t, 9999, original.Server.Port)
 	assert.Equal(t, 8888, copy.Server.Port)
-	assert.Equal(t, "original-secret", original.Auth.JWT.Secret)
-	assert.Equal(t, "new-secret", copy.Auth.JWT.Secret)
+	assert.Equal(t, "original-secret-must-be-at-least-32-characters-long", original.Auth.JWT.Secret)
+	assert.Equal(t, "new-secret-must-be-at-least-32-characters-long", copy.Auth.JWT.Secret)
 }
 
 func TestConfigWithAllFeatures(t *testing.T) {
