@@ -22,7 +22,7 @@ func New(cfg *config.Config, cacheManager cache.Cache, logger *logger.Logger) *G
 	backendManager := NewBackendManager()
 	circuitManager := circuit.NewManager()
 
-	proxy := NewProxy(backendManager, cacheManager, circuitManager, logger)
+	proxy := NewProxy(backendManager, cacheManager, circuitManager, logger, cfg)
 
 	gateway := &Gateway{
 		config:         cfg,
@@ -66,4 +66,16 @@ func (g *Gateway) GetBackendManager() *BackendManager {
 
 func (g *Gateway) GetCircuitManager() *circuit.Manager {
 	return g.circuitManager
+}
+
+func (g *Gateway) GetConfig() *config.Config {
+	return g.config
+}
+
+func (g *Gateway) GetCacheManager() cache.Cache {
+	return g.cacheManager
+}
+
+func (g *Gateway) GetLogger() *logger.Logger {
+	return g.logger
 }

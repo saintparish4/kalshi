@@ -16,7 +16,7 @@ import (
 var (
 	RequestsTotal = promauto.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "kalshi_requests_total",
+			Name: "http_requests_total",
 			Help: "Total number of requests processed",
 		},
 		[]string{"method", "path", "status", "backend"},
@@ -24,7 +24,7 @@ var (
 
 	RequestDuration = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "kalshi_request_duration_seconds",
+			Name:    "http_request_duration_seconds",
 			Help:    "Request duration in seconds",
 			Buckets: prometheus.DefBuckets,
 		},
@@ -33,7 +33,7 @@ var (
 
 	RateLimitHits = promauto.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "kalshi_rate_limit_hits_total",
+			Name: "rate_limit_hits_total",
 			Help: "Total number of rate limit hits",
 		},
 		[]string{"path", "client_id"},
@@ -41,7 +41,7 @@ var (
 
 	CacheHits = promauto.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "kalshi_cache_hits_total",
+			Name: "cache_hits_total",
 			Help: "Total number of cache hits",
 		},
 		[]string{"cache_type", "hit_type"},
@@ -49,7 +49,7 @@ var (
 
 	CircuitBreakerState = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: "kalshi_circuit_breaker_state",
+			Name: "circuit_breaker_state",
 			Help: "Circuit breaker state (0: Closed, 1: Open, 2: Half-Open)",
 		},
 		[]string{"backend"},

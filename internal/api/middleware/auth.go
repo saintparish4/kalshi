@@ -171,3 +171,49 @@ func OptionalAuth(jwtManager *auth.JWTManager, apiKeyManager *auth.APIKeyManager
 		c.Next()
 	}
 }
+
+// RequireAuth requires either JWT or API key authentication to be valid.
+// If neither authentication method succeeds, the request is rejected.
+// This is different from OptionalAuth which allows anonymous access.
+func RequireAuth(jwtManager *auth.JWTManager, apiKeyManager *auth.APIKeyManager, apiKeyHeader string, log *logger.Logger) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Try JWT first
+		authHeader := c.GetHeader("Authorization")
+		if authHeader != "" {
+			parts := strings.Split(authHeader, " ")
+			if len(parts) == 2 && parts[0] == "Bearer" {
+				token := parts[1]
+				if claims, err := jwtManager.ValidateToken(c.Request.Context(), token); err == nil {
+					c.Set(ContextUserID, claims.UserID)
+					c.Set(ContextRole, claims.Role)
+					c.Set(ContextAuthMethod, AuthMethodJWT)
+					c.Next()
+					return
+				}
+			}
+		}
+
+		// Try API key
+		apiKey := c.GetHeader(apiKeyHeader)
+		if apiKey == "" {
+			apiKey = c.Query("api_key")
+		}
+
+		if apiKey != "" {
+			if keyInfo, err := apiKeyManager.ValidateAPIKey(c.Request.Context(), apiKey); err == nil {
+				c.Set(ContextUserID, keyInfo.UserID)
+				c.Set(ContextRateLimit, keyInfo.RateLimit)
+				c.Set(ContextAuthMethod, AuthMethodAPIKey)
+				c.Next()
+				return
+			}
+		}
+
+		// No valid authentication found - reject the request
+		log.Warn("Authentication required but no valid credentials provided", "ip", c.ClientIP())
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "Authentication required",
+		})
+		c.Abort()
+	}
+}

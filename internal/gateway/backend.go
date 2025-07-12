@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"sync"
@@ -140,7 +141,23 @@ func (bm *BackendManager) checkBackendHealth(backend *Backend) {
 		return
 	}
 
-	client := &http.Client{Timeout: 5 * time.Second}
+	// Use optimized HTTP client for health checks
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+		Transport: &http.Transport{
+			MaxIdleConns:        100,
+			MaxIdleConnsPerHost: 100,
+			IdleConnTimeout:     30 * time.Second,
+			DisableCompression:  true,
+			DisableKeepAlives:   false,
+			ForceAttemptHTTP2:   true,
+			DialContext: (&net.Dialer{
+				Timeout:   3 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).DialContext,
+		},
+	}
+
 	resp, err := client.Do(req)
 	if err != nil {
 		bm.updateBackendHealth(backend, false)
@@ -156,4 +173,39 @@ func (bm *BackendManager) updateBackendHealth(backend *Backend, healthy bool) {
 	backend.mu.Lock()
 	backend.IsHealthy = healthy
 	backend.mu.Unlock()
+}
+
+// GetBackendByName returns a backend by name without health check
+func (bm *BackendManager) GetBackendByName(name string) (*Backend, error) {
+	bm.mu.RLock()
+	defer bm.mu.RUnlock()
+
+	backend, exists := bm.backends[name]
+	if !exists {
+		return nil, fmt.Errorf("backend %s not found", name)
+	}
+
+	return backend, nil
+}
+
+// TriggerHealthCheck manually triggers a health check for a specific backend
+func (bm *BackendManager) TriggerHealthCheck(name string) error {
+	backend, err := bm.GetBackendByName(name)
+	if err != nil {
+		return err
+	}
+
+	bm.checkBackendHealth(backend)
+	return nil
+}
+
+// SetBackendHealth manually sets the health status of a backend
+func (bm *BackendManager) SetBackendHealth(name string, healthy bool) error {
+	backend, err := bm.GetBackendByName(name)
+	if err != nil {
+		return err
+	}
+
+	bm.updateBackendHealth(backend, healthy)
+	return nil
 }

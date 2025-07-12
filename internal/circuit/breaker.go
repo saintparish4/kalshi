@@ -127,4 +127,14 @@ func (cb *CircuitBreaker) Reset() {
 	metrics.CircuitBreakerState.WithLabelValues(cb.backend).Set(float64(StateClosed))
 }
 
+// SetState manually sets the circuit breaker state
+func (cb *CircuitBreaker) SetState(state State) {
+	cb.mu.Lock()
+	defer cb.mu.Unlock()
+	cb.state = state
+	cb.failureCount = 0
+	cb.successCount = 0
+	metrics.CircuitBreakerState.WithLabelValues(cb.backend).Set(float64(state))
+}
+
 var ErrCircuitBreakerOpen = errors.New("circuit breaker is open")

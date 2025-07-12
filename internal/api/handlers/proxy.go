@@ -167,3 +167,41 @@ func (h *ProxyHandler) GetRoutes(c *gin.Context) {
 		"total":  len(routes),
 	})
 }
+
+// GetRoute returns a specific route by ID
+func (h *ProxyHandler) GetRoute(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Route ID parameter is required",
+		})
+		return
+	}
+
+	// Find route by ID (using path as ID for now)
+	for _, route := range h.config.Routes {
+		if route.Path == id {
+			c.JSON(http.StatusOK, gin.H{
+				"path":       route.Path,
+				"backend":    route.Backend,
+				"methods":    route.Methods,
+				"rate_limit": route.RateLimit,
+				"cache_ttl":  route.CacheTTL.String(),
+			})
+			return
+		}
+	}
+
+	c.JSON(http.StatusNotFound, gin.H{
+		"error": "Route not found",
+		"id":    id,
+	})
+}
+
+// ReloadRoutes reloads route configuration
+func (h *ProxyHandler) ReloadRoutes(c *gin.Context) {
+	// For now, just return success since we don't have dynamic config reload
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Route reload not implemented yet",
+	})
+}

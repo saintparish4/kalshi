@@ -73,8 +73,10 @@ func (a *APIKeyManager) ValidateAPIKey(ctx context.Context, apiKey string) (*API
 
 	// Get API key info from storage
 	key := "apikey:" + apiKey
+	// Looking up API key in storage
 	data, err := a.storage.Get(ctx, key)
 	if err != nil {
+		// Storage.Get failed for key
 		return nil, ErrAPIKeyNotFound
 	}
 

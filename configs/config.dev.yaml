@@ -1,0 +1,68 @@
+# Development Configuration
+server:
+  port: 8080
+  host: "localhost"
+  read_timeout: "30s"
+  write_timeout: "30s"
+  idle_timeout: "60s"
+
+auth:
+  jwt:
+    secret: "?D;|<Onikx-$EhL4wBC,3APl7M)0u@j}"
+    access_expiry: "24h"
+    refresh_expiry: "168h"
+  api_key:
+    enabled: true
+    header: "X-API-Key"
+
+rate_limit:
+  default_rate: 100
+  burst_capacity: 20
+  storage: "memory"
+  cleanup_interval: "30s"
+
+cache:
+  redis:
+    addr: "localhost:6379"
+    password: ""
+    db: 1  # Use different DB for dev
+    ttl: "60s"
+  memory:
+    max_size: 100
+    ttl: "30s"
+
+circuit:
+  failure_threshold: 3
+  recovery_timeout: "10s"
+  max_requests: 2
+
+backends:
+  - name: "httpbin"
+    url: "https://httpbin.org"
+    health_check: "/status/200"
+    weight: 100
+  - name: "jsonplaceholder"
+    url: "https://jsonplaceholder.typicode.com"
+    health_check: "/posts/1"
+    weight: 100
+
+routes:
+  - path: "/api/test/*"
+    backend: "httpbin"
+    methods: ["GET", "POST"]
+    rate_limit: 50
+    cache_ttl: "30s"
+  - path: "/api/posts/*"
+    backend: "jsonplaceholder"
+    methods: ["GET"]
+    rate_limit: 100
+    cache_ttl: "60s"
+
+logging:
+  level: "debug"
+  format: "json"
+
+metrics:
+  enabled: true
+  path: "/metrics"
+  port: 9090

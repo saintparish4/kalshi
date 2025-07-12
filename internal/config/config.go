@@ -24,6 +24,8 @@ type Config struct {
 	Routes    []RouteConfig   `mapstructure:"routes" json:"routes"`         // Route mapping configuration
 	Logging   LoggingConfig   `mapstructure:"logging" json:"logging"`       // Logging configuration
 	Metrics   MetricsConfig   `mapstructure:"metrics" json:"metrics"`       // Metrics/Prometheus configuration
+	// Phase 1: Performance optimizations
+	Performance PerformanceConfig `mapstructure:"performance" json:"performance"` // Performance optimization settings
 }
 
 // ServerConfig defines server-related configuration
@@ -112,11 +114,34 @@ type LoggingConfig struct {
 	Format string `mapstructure:"format" json:"format"`
 }
 
-// MetricsConfig defines metrics configuration
+// MetricsConfig defines metrics/Prometheus configuration
 type MetricsConfig struct {
 	Enabled bool   `mapstructure:"enabled" json:"enabled"`
 	Path    string `mapstructure:"path" json:"path"`
 	Port    int    `mapstructure:"port" json:"port"`
+}
+
+// PerformanceConfig defines Phase 1 performance optimization settings
+type PerformanceConfig struct {
+	// Connection pooling settings
+	EnableConnectionPooling bool          `mapstructure:"enable_connection_pooling" json:"enable_connection_pooling"`
+	MaxIdleConns            int           `mapstructure:"max_idle_conns" json:"max_idle_conns"`
+	MaxIdleConnsPerHost     int           `mapstructure:"max_idle_conns_per_host" json:"max_idle_conns_per_host"`
+	IdleConnTimeout         time.Duration `mapstructure:"idle_conn_timeout" json:"idle_conn_timeout"`
+
+	// HTTP client optimizations
+	DisableCompression bool `mapstructure:"disable_compression" json:"disable_compression"`
+	DisableKeepAlives  bool `mapstructure:"disable_keep_alives" json:"disable_keep_alives"`
+	ForceHTTP2         bool `mapstructure:"force_http2" json:"force_http2"`
+
+	// Connection timeouts
+	ConnectionTimeout time.Duration `mapstructure:"connection_timeout" json:"connection_timeout"`
+	KeepAlive         time.Duration `mapstructure:"keep_alive" json:"keep_alive"`
+
+	// High-performance settings
+	MaxConnsPerHost       int           `mapstructure:"max_conns_per_host" json:"max_conns_per_host"`
+	TLSHandshakeTimeout   time.Duration `mapstructure:"tls_handshake_timeout" json:"tls_handshake_timeout"`
+	ExpectContinueTimeout time.Duration `mapstructure:"expect_continue_timeout" json:"expect_continue_timeout"`
 }
 
 // DefaultConfig returns a configuration with sensible defaults
@@ -189,6 +214,21 @@ func DefaultConfig() *Config {
 			Enabled: true,
 			Path:    "/metrics",
 			Port:    9090,
+		},
+		// Phase 1: Performance optimizations
+		Performance: PerformanceConfig{
+			EnableConnectionPooling: true,
+			MaxIdleConns:            1000,
+			MaxIdleConnsPerHost:     1000,
+			IdleConnTimeout:         90 * time.Second,
+			DisableCompression:      true,
+			DisableKeepAlives:       false,
+			ForceHTTP2:              true,
+			ConnectionTimeout:       5 * time.Second,
+			KeepAlive:               30 * time.Second,
+			MaxConnsPerHost:         2000,
+			TLSHandshakeTimeout:     10 * time.Second,
+			ExpectContinueTimeout:   1 * time.Second,
 		},
 	}
 }
